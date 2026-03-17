@@ -65,7 +65,7 @@ if name:
         if fav_drink:  # ตรวจสอบว่ามีอินพุตก่อน
             if fav_drink == "ชลลี่":
                 st.balloons()
-                st.markdown("<p class='cute-text'>💖 เฮียจริง ๆ หรอคะ 🥺💖</p>", unsafe_allow_html=True)
+                st.markdown("<p class='cute-text'>💖 เฮียจริง ๆ ด้วย เค้าให้นะคะ 🥺💖</p>", unsafe_allow_html=True)
                 st.markdown(draw_heart(), unsafe_allow_html=True)  # แสดงหัวใจตรงกลาง
             else:
                 st.markdown("<p class='white-text'>🤔 ไม่ใช่ครับ เอาใหม่ </p>", unsafe_allow_html=True)
