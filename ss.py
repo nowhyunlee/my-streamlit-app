@@ -1,95 +1,197 @@
 import streamlit as st
+import time
 from random import randint
 
-# เพิ่ม CSS ปรับสไตล์ให้ปุ่มและข้อความเข้ากับธีม
+# --- 1. ตั้งค่าหน้าเว็บและ CSS ธีมความรัก ---
+st.set_page_config(page_title="เซียมซีความรัก", page_icon="💖")
+
 st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
 
-        .pink-text {
-            text-align: center;
-            font-size: 22px;
-            color: #ff4081;
+        * {
             font-family: 'Kanit', sans-serif;
-        }
-        .p2-text {
-            text-align: left;
-            font-size: 22px;
-            color: #ff4081;
-            font-family: 'Kanit', sans-serif;
-        }
-        .stTextInput>div>div>input {
-            font-family: 'Kanit', sans-serif;
-            font-size: 16px;
-            color: #ff4081;
-            text-align: center;
         }
 
-        .stButton>button {
-            font-family: 'Kanit', sans-serif;
+        .title-text {
+            text-align: center;
+            font-size: 38px;
+            font-weight: 500;
+            color: #E91E63; /* สีชมพูเข้ม */
+            margin-bottom: 5px;
+        }
+
+        .subtitle-text {
+            text-align: center;
+            font-size: 18px;
+            color: #D81B60; 
+            margin-bottom: 20px;
+        }
+
+        .status-text {
+            text-align: center;
             font-size: 20px;
+            color: #C2185B;
+            font-weight: 500;
+        }
+
+        .result-number {
+            text-align: center;
+            font-size: 50px;
+            font-weight: bold;
+            color: #E91E63;
+            background-color: #FCE4EC;
+            border: 3px solid #F48FB1;
+            border-radius: 20px;
+            padding: 15px;
+            margin: 20px 0;
+            box-shadow: 0px 4px 10px rgba(233, 30, 99, 0.2);
+        }
+
+        .prediction-box {
+            font-size: 18px;
+            color: #424242;
+            background-color: #FAFAFA;
+            border-left: 6px solid #F06292;
+            padding: 20px;
+            margin-top: 10px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .advice-text {
+            color: #D81B60;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        /* ปรับแต่งปุ่มกด */
+        .stButton>button {
+            font-size: 22px;
             color: white;
-            background-color: #ff4081;
+            background-color: #EC407A;
+            border: none;
             border-radius: 12px;
-            padding: 10px;
+            padding: 15px;
             width: 100%;
             transition: 0.3s;
+            box-shadow: 0px 4px 6px rgba(236, 64, 122, 0.3);
         }
-
         .stButton>button:hover {
-            background-color: #d81b60;
-        }
-
-        .result-box {
-            font-family: 'Kanit', sans-serif;
-            font-size: 18px;
-            text-align: center;
-            color: #ff4081;
-            background-color: #ffe6eb;
-            padding: 10px;
-            border-radius: 10px;
-            margin-top: 10px;
+            background-color: #D81B60;
+            transform: translateY(-2px);
+            box-shadow: 0px 6px 12px rgba(236, 64, 122, 0.4);
         }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<p class='pink-text'>🧧 ยินดีต้อนรับเข้าสู่การเสี่ยงเซียมซี 🧧</p>", unsafe_allow_html=True)
-st.markdown("<p class='p2-text'>คุณต้องการที่จะเสี่ยงเซียมซีไหม? (yes/no)</p>", unsafe_allow_html=True)
+# --- 2. ฐานข้อมูลคำทำนายความรัก (15 ใบ) ---
+predictions = {
+    1: ("เวทมนตร์แห่งการเริ่มต้น (The Magician)", 
+        "ใบนี้บอกถึงพลังงานใหม่ๆ ที่กำลังเข้ามา คนโสดมีเกณฑ์ได้พบคนใหม่จากการเดินทางหรือการเรียนรู้สิ่งใหม่ๆ ส่วนคนมีคู่ ความรักจะกลับมามีชีวิตชีวาเหมือนจีบกันใหม่ๆ", 
+        "💡 คำแนะนำ: เปิดใจให้กว้าง ลองทำอะไรที่ไม่เคยทำ หรือไปในที่ที่ไม่เคยไป แล้วความรักจะตามหาคุณเอง"),
+    
+    2: ("เงาสะท้อนของกันและกัน (Twin Flames)", 
+        "คุณกำลังดึงดูดคนที่มีคลื่นความถี่เดียวกันเข้ามาในชีวิต เขาหรือเธอคนนี้จะเข้าใจคุณอย่างลึกซึ้ง มองตาก็รู้ใจ คุยกันคลิกอย่างประหลาด", 
+        "💡 คำแนะนำ: เป็นตัวของตัวเองให้มากที่สุด เพราะคนที่ใช่จะรักในความเรียลของคุณ"),
+    
+    3: ("เมฆหมอกพัดผ่านไป (Healing Heart)", 
+        "ความเจ็บปวดหรือความกังวลใจในอดีตกำลังจะจบลง ฟ้าหลังฝนของดวงความรักคุณกำลังจะมาเยือน ถึงเวลาสลัดความเศร้าทิ้งไปได้แล้ว", 
+        "💡 คำแนะนำ: ให้อภัยตัวเองและอดีต เพื่อเคลียร์พื้นที่ในหัวใจต้อนรับรักครั้งใหม่ที่ใจดีกว่าเดิม"),
+    
+    4: ("จังหวะของพรหมลิขิต (Wheel of Fortune)", 
+        "ทุกอย่างถูกกำหนดมาแล้วในเวลาที่เหมาะสม ถ้าคุณกำลังรอคอยความชัดเจน หรือรอใครสักคน จักรวาลกำลังจัดสรรให้มันเกิดขึ้นในเวลาที่เพอร์เฟกต์ที่สุด", 
+        "💡 คำแนะนำ: อย่ารีบร้อนกดดันสถานการณ์ ปล่อยให้มันค่อยๆ เติบโตตามธรรมชาติจะดีที่สุด"),
+    
+    5: ("ความรักสว่างไสวดั่งกองไฟ (Fire Element)", 
+        "ดวงความรักช่วงนี้ร้อนแรง มีแพสชันสูงมาก! อาจมีคนพุ่งเข้าหาคุณแบบตรงไปตรงมา หรือคุณอาจจะรู้สึกตกหลุมรักใครสักคนแบบหัวปักหัวปำ", 
+        "💡 คำแนะนำ: สนุกกับความตื่นเต้นนี้ได้ แต่อย่าลืมใช้เหตุผลควบคู่ไปกับหัวใจด้วยนะ"),
+    
+    6: ("สายน้ำแห่งความผูกพัน (Water Element)", 
+        "ความสัมพันธ์ในช่วงนี้เน้นไปที่ความรู้สึกผูกพันลึกซึ้ง ความอ่อนโยน การดูแลเอาใจใส่ คนโสดอาจได้พัฒนาความสัมพันธ์จากเพื่อนสนิทหรือคนใกล้ตัว", 
+        "💡 คำแนะนำ: ใช้ความอ่อนหวานและความเห็นอกเห็นใจเป็นอาวุธลับในการมัดใจ"),
+    
+    7: ("ต้นไม้ที่หยั่งรากลึก (Earth Element)", 
+        "ความรักของคุณไม่หวือหวาแต่มั่นคงมาก ใบนี้เป็นสัญลักษณ์ของความซื่อสัตย์และการสร้างอนาคตร่วมกัน หากมีคนคุยอยู่ เขาคนนี้จริงจังและหวังแต่ง", 
+        "💡 คำแนะนำ: ให้ความสำคัญกับการกระทำมากกว่าคำพูด รักแท้มักมาในรูปแบบของความสม่ำเสมอ"),
+    
+    8: ("สายลมแห่งความเข้าใจ (Air Element)", 
+        "กุญแจสำคัญของความรักช่วงนี้คือ 'การสื่อสาร' คุณจะเจอคนที่คุยด้วยแล้วสบายใจ แลกเปลี่ยนทัศนคติกันได้ทุกเรื่องโดยไม่อึดอัด", 
+        "💡 คำแนะนำ: หากมีเรื่องไม่เข้าใจกัน ให้พูดออกมาตรงๆ ด้วยเหตุผล อย่าเก็บไว้คิดไปเองคนเดียว"),
+    
+    9: ("รักตัวเองก่อนเสมอ (Self-Love 101)", 
+        "เซียมซีใบนี้สะกิดบอกว่า ช่วงนี้คุณอาจโฟกัสเรื่องคนอื่นมากเกินไป ลองหันกลับมาดูแลตัวเอง เติมความสุขให้ตัวเองดูบ้าง แล้วออร่าของคุณจะพุ่งสุดๆ", 
+        "💡 คำแนะนำ: คนที่รักตัวเองเป็น คือคนที่น่าดึงดูดที่สุด ไปทำสวย/ทำหล่อ หรือทำสิ่งที่ชอบซะ!"),
+    
+    10: ("ออร่าแห่งความมีเสน่ห์ (Venus Favor)", 
+        "ดวงดาวแห่งความรักกำลังส่องแสงมาที่คุณ! ช่วงนี้คุณจะมีเสน่ห์ดึงดูดเป็นพิเศษ มีคนแอบมอง แอบปลื้ม หรือมีเกณฑ์รถไฟจะชนกันได้เลยทีเดียว", 
+        "💡 คำแนะนำ: บริหารเสน่ห์ให้ดี เช็กให้ชัวร์ว่าใครโสดจริง จะได้ไม่ตกเป็นมือที่สามโดยไม่รู้ตัว"),
+    
+    11: ("บททดสอบจากดวงดาว (Saturn's Test)", 
+        "ความรักอาจมีเรื่องให้ต้องฝ่าฟัน ระยะทาง เวลา หรือความไม่เข้าใจบางอย่างเข้ามาทดสอบใจ ใบนี้บอกว่าถ้าผ่านไปได้ ความรักจะแข็งแกร่งขึ้นมหาศาล", 
+        "💡 คำแนะนำ: จับมือกันให้แน่น ความอดทนและความเชื่อใจคือวัคซีนชั้นดีสำหรับช่วงเวลานี้"),
+    
+    12: ("เซอร์ไพรส์จากคนไม่คาดคิด (Unexpected Love)", 
+        "เตรียมตัวรับความประหลาดใจ! คนที่คุณไม่เคยมอง คนที่อยู่นอกสายตา หรือสเปกที่ไม่เคยคิดว่าชอบ อาจจะกลายมาเป็นคนที่ขโมยหัวใจคุณไปเฉยเลย", 
+        "💡 คำแนะนำ: อย่าเพิ่งตั้งกำแพงหรือล็อกสเปกไว้แน่นเกินไป ลองเปิดใจให้คนที่แตกต่างดูบ้าง"),
+    
+    13: ("ดวงตะวันในใจเธอ (The Sun)", 
+        "ความรักที่เรียบง่าย สดใส และเต็มไปด้วยเสียงหัวเราะ คุณจะเจอความสัมพันธ์ที่ทำให้อยากตื่นขึ้นมาในทุกๆ วัน ไม่มีอะไรซับซ้อน มีแต่ความสบายใจ", 
+        "💡 คำแนะนำ: รักษาพลังงานบวกนี้ไว้ รอยยิ้มของคุณคือสิ่งที่ทำให้เขาตกหลุมรักซ้ำๆ"),
+    
+    14: ("เสียงกระซิบจากหัวใจ (The Moon's Intuition)", 
+        "เซียมซีใบนี้บอกให้คุณ 'เชื่อสัญชาตญาณตัวเอง' หากรู้สึกว่าคนนี้ใช่ มักจะใช่ หากเซนส์บอกว่ามีบางอย่างผิดปกติ ก็มักจะเป็นตามนั้นจริงๆ", 
+        "💡 คำแนะนำ: หยุดฟังสียงคนรอบข้างสักพัก แล้วลองเงี่ยหูฟังเสียงหัวใจตัวเองดูว่าจริงๆ แล้วคุณต้องการอะไร"),
+    
+    15: ("จิ๊กซอว์ชิ้นสุดท้าย (The World)", 
+        "ความสมบูรณ์แบบกำลังจะเกิดขึ้น คนที่เข้ามาในช่วงนี้จะเติมเต็มส่วนที่ขาดหาย ทำให้คุณรู้สึกว่า 'จบแล้วที่คนนี้' เป็นความรักที่ลงตัวในทุกมิติ", 
+        "💡 คำแนะนำ: เมื่อเจอจิ๊กซอว์ที่พอดีแล้ว ก็จงดูแลรักษาเขาไว้ให้ดีที่สุด")
+}
 
-answer = st.text_input(" ", key="answer", placeholder="พิมพ์ yes หรือ no แล้วกด Enter")
+# --- 3. ส่วนแสดงผลบนเว็บ ---
+st.markdown("<div class='title-text'>💖 เซียมซีทำนายรัก 💖</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle-text'>หลับตา ตั้งจิตนึกถึงเรื่องความรัก แล้วกดปุ่มเพื่อรับคำทำนาย</div>", unsafe_allow_html=True)
 
-if answer.lower() == "yes":
-    if "number" not in st.session_state:
-        st.session_state.number = randint(1, 9)
+if "love_number" not in st.session_state:
+    st.session_state.love_number = None
 
-    st.markdown(f"<p class='result-box'>🔮 คุณได้เซียมซีหมายเลข {st.session_state.number} 🔮</p>", unsafe_allow_html=True)
+animation_area = st.empty()
+result_area = st.container()
 
-    if "show_prediction" not in st.session_state:
-        st.session_state.show_prediction = False
+if st.button("🌸 กดเพื่อเสี่ยงเซียมซีความรัก"):
+    st.session_state.love_number = None
+    
+    with animation_area.container():
+        status_text = st.empty()
+        progress_bar = st.progress(0)
+        
+        status_text.markdown("<p class='status-text'>อธิษฐานถึงคนในใจ หรือความรักที่คุณปรารถนา...</p>", unsafe_allow_html=True)
+        time.sleep(1.2)
+        
+        for i in range(100):
+            progress_bar.progress(i + 1)
+            status_text.markdown("<p class='status-text'>🎋 กำลังเขย่ากระบอกเซียมซี... แกรก... แกรก...</p>", unsafe_allow_html=True)
+            time.sleep(0.015)
+            
+        status_text.markdown("<p class='status-text'>✨ ไม้เซียมซีแห่งโชคชะตาหล่นลงมาแล้ว! ✨</p>", unsafe_allow_html=True)
+        time.sleep(1.5)
+        
+        progress_bar.empty()
+        status_text.empty()
+        
+    st.session_state.love_number = randint(1, 15)
 
-    if not st.session_state.show_prediction:
-        if st.button("ดูคำทำนาย"):
-            st.session_state.show_prediction = True  # กดแล้วแสดงผลและทำให้ปุ่มหายไป
-
-    if st.session_state.show_prediction:
-        messages = {
-            1: ("💖 รักนี้สดใส หัวใจพองโต 💖", "ความรักของคุณกำลังไปได้ดี อบอุ่นเหมือนแสงแดดอ่อนๆในยามเช้า ถ้ายังโสด มีโอกาสได้พบคนที่ใช่เร็วๆ นี้!"),
-            2: ("🌬️ สายลมแห่งรักพัดผ่านมา 🌬️", "ใครบางคนเริ่มแอบมองคุณอยู่ไกลๆ ลองเปิดใจให้โอกาสตัวเองนะ ความรักอาจมาแบบไม่คาดคิด!"),
-            3: ("📍 รักแท้ไม่แพ้ระยะทาง 📍", "แม้จะอยู่ไกลกัน แต่ความรู้สึกยังมั่นคง เชื่อมั่นในกันและกัน แล้วทุกอย่างจะราบรื่นไปด้วยดี"),
-            4: ("💘 เสี่ยงเซียมซีมาเจอรักแท้ 💘", "เซียมซีใบนี้บอกว่า โชคชะตากำลังจะพาคุณไปพบกับคนที่ทำให้หัวใจเต้นแรง เตรียมตัวให้ดีนะ!"),
-            5: ("🎁 รักนี้มีเซอร์ไพรส์ 🎁", "ใครบางคนกำลังคิดจะทำอะไรพิเศษให้คุณ ไม่แน่ว่าอาจมีของขวัญ หรือคำบอกรักที่คุณรอคอย!"),
-            6: ("🚀 ดวงความรักพุ่งแรงเวอร์ 🚀", "คนโสดมีเกณฑ์จะมีคนเข้ามาจีบ ส่วนคนมีคู่ ความสัมพันธ์จะยิ่งแน่นแฟ้นขึ้นกว่าเดิม!"),
-            7: ("💡 ใจตรงกัน สัญญาณรักมาแล้ว 💡", "ถ้ากำลังลังเลอยู่ ลองส่งสัญญาณไปดู เพราะมีโอกาสสูงมากที่เขาก็รู้สึกเหมือนกัน!"),
-            8: ("🧋 ความรักเหมือนชาไข่มุก 🧋", "อดใจรออีกนิด อย่ารีบร้อน เพราะรักที่ดีจะมาหาในเวลาที่เหมาะสม แล้วคุณจะรู้ว่ามันคุ้มค่าที่สุด!"),
-            9: ("🔍 หัวใจตรงกัน แอบรักไม่ไกลเกินเอื้อม 🔍", "มีใครบางคนคิดถึงคุณอยู่ อาจเป็นคนใกล้ตัวที่คุณไม่ทันสังเกต ลองสังเกตดูสิ!"),
-        }
-
-        title, description = messages[st.session_state.number]
-        st.markdown(f"<p class='result-box'>{title}</p>", unsafe_allow_html=True)
-        st.markdown(f"<p class='pink-text'>{description}</p>", unsafe_allow_html=True)
-
-elif answer.lower() == "no":
-    st.markdown("<p class='result-box'>😌 คุณเลือกที่จะไม่เสี่ยงเซียมซี</p>", unsafe_allow_html=True)
-
-elif answer:
-    st.markdown("<p class='result-box'>⚠️ กรุณาพิมพ์ yes หรือ no เท่านั้น ⚠️</p>", unsafe_allow_html=True)
+# --- 4. แสดงผลคำทำนาย ---
+if st.session_state.love_number is not None:
+    num = st.session_state.love_number
+    title, detail, advice = predictions[num]
+    
+    with result_area:
+        st.markdown(f"<div class='result-number'>ใบที่ {num}</div>", unsafe_allow_html=True)
+        st.markdown(f"""
+            <div class='prediction-box'>
+                <h4 style="color: #E91E63; margin-top: 0;">🔮 {title}</h4>
+                <p>{detail}</p>
+                <div class='advice-text'>{advice}</div>
+            </div>
+        """, unsafe_allow_html=True)
