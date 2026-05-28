@@ -3,7 +3,7 @@ import time
 from random import randint
 
 # --- 1. ตั้งค่าหน้าเว็บและ CSS ---
-st.set_page_config(page_title="เซียมซีความรัก & เนื้อคู่", page_icon="💖")
+st.set_page_config(page_title="เซียมซีอะไร ใครเล่น", page_icon="💖")
 
 st.markdown("""
     <style>
@@ -195,14 +195,14 @@ if "show_match" not in st.session_state:
     st.session_state.show_match = False
 
 # --- 4. ส่วนแสดงผลบนเว็บ ---
-st.markdown("<div class='title-text'>💖 เซียมซีทำนายรัก & เนื้อคู่ 💖</div>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle-text'>หลับตา ตั้งจิตนึกถึงเรื่องความรัก แล้วกดปุ่มเพื่อรับคำทำนาย</div>", unsafe_allow_html=True)
+st.markdown("<div class='title-text'>💖 เซียมซี ซีเซียม แซมซุง 💖</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle-text'>หลับตา ตั้งจิต แล้วนอน ไม่ใช่ !! แล้วกดปุ่มเพื่อรับคำทำนาย</div>", unsafe_allow_html=True)
 
 animation_area = st.empty()
 result_area = st.container()
 
 # ปุ่มหลักสำหรับเสี่ยงเซียมซี
-if st.button("🌸 กดเพื่อเสี่ยงเซียมซีความรัก"):
+if st.button("🌸 กดเพื่อเสี่ยงเซียมซี"):
     st.session_state.love_number = None
     st.session_state.show_match = False
     
